@@ -66,8 +66,14 @@ showBoard board = intercalate "\n" $ map lineToString (tupleToList board) where
   optPieceToString (Just Yellow) = "Y"
   optPieceToString (Just Red) = "R"
 
---insertPiece :: BoardIndex -> Piece -> BoardMatrix -> Maybe BoardMatrix
---insertPiece column piece board = _
+insertPiece :: BoardIndex -> Piece -> BoardMatrix -> Maybe BoardMatrix
+insertPiece columnIndex piece board = let
+    boardList = boardMatrixToList board
+    column = (transpose boardList) !! boardIndexToInt columnIndex
+    availableIndex :: Maybe Int
+    availableIndex = (7 -) <$> findIndex isNothing (reverse column)
+    newBoard = (\ yPos -> updateBoard (columnIndex, boardIndex yPos) (Just piece) board) <$> availableIndex
+  in newBoard
 
 main :: IO ()
 main = putStrLn "Hello, world!"
