@@ -1,8 +1,14 @@
 module Main where
+import Control.Monad.Loops (iterateM_)
 import Data.List (intercalate, transpose, findIndex)
 import Data.Maybe (isNothing)
+import Data.IORef (newIORef, readIORef, writeIORef, modifyIORef)
 
 data Piece = Red | Yellow deriving Show
+
+antipode :: Piece -> Piece
+antipode Red = Yellow
+antipode Yellow = Red
 
 type BoardLine = (Maybe Piece, Maybe Piece, Maybe Piece, Maybe Piece, Maybe Piece, Maybe Piece, Maybe Piece)
 
@@ -69,11 +75,19 @@ showBoard board = intercalate "\n" $ map lineToString (tupleToList board) where
 insertPiece :: BoardIndex -> Piece -> BoardMatrix -> Maybe BoardMatrix
 insertPiece columnIndex piece board = let
     boardList = boardMatrixToList board
-    column = (transpose boardList) !! boardIndexToInt columnIndex
+    column = boardList !! boardIndexToListIndex columnIndex
     availableIndex :: Maybe Int
-    availableIndex = (7 -) <$> findIndex isNothing (reverse column)
+    availableIndex = findIndex isNothing (column)
     newBoard = (\ yPos -> updateBoard (columnIndex, boardIndex yPos) (Just piece) board) <$> availableIndex
   in newBoard
 
 main :: IO ()
-main = putStrLn "Hello, world!"
+main = do
+  flip iterateM_ (Yellow, emptyBoard) (\(cur, board) -> do
+    putStrLn $ showBoard board
+    pos <- readLn
+    let ix = boardIndex pos
+    return $ case insertPiece ix cur board of
+      Nothing -> (cur, board)
+      Just b -> (antipode cur, b))
+
