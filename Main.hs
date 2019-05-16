@@ -26,6 +26,9 @@ boardIndexToInt ix = at ix (1, 2, 3, 4, 5, 6, 7)
 boardIndexToListIndex :: BoardIndex -> Int
 boardIndexToListIndex ix = at ix (0, 1, 2, 3, 4, 5, 6)
 
+boardMatrixToList :: BoardMatrix -> [[Maybe Piece]]
+boardMatrixToList = map tupleToList . tupleToList
+
 tupleToList :: (t, t, t, t, t, t, t) -> [t]
 tupleToList (a, b, c, d, e, f, g) = [ a, b, c, d, e, f, g ]
 
@@ -45,7 +48,8 @@ showBoard board = intercalate "\n" $ map lineToString (tupleToList board) where
   optPieceToString (Just Yellow) = "Y"
   optPieceToString (Just Red) = "R"
 
---insertPiece :: BoardIndex -> Piece -> Board -> Maybe Board
+--insertPiece :: BoardIndex -> Piece -> BoardMatrix -> Maybe BoardMatrix
+--insertPiece column piece board = _
 
 main :: IO ()
 main = putStrLn "Hello, world!"
