@@ -42,7 +42,7 @@ updateTuple Six   n (a, b, c, d, e, f, z) = (a, b, c, d, e, n, z)
 updateTuple Seven n (a, b, c, d, e, f, z) = (a, b, c, d, e, f, n)
 
 updateBoard :: BoardPosition -> Maybe Piece -> BoardMatrix -> BoardMatrix
-updateBoard (x, y) piece board = updateTuple x (updateTuple y piece (at y board)) board
+updateBoard (x, y) piece board = updateTuple y (updateTuple x piece (at y board)) board
 
 boardIndexToInt :: BoardIndex -> Int
 boardIndexToInt ix = at ix (1, 2, 3, 4, 5, 6, 7)
