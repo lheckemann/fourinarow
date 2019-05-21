@@ -1,7 +1,7 @@
 module Main where
 import Control.Monad.Loops (iterateM_)
 import Data.List (intercalate, transpose, findIndex)
-import Data.Maybe (isNothing)
+import Data.Maybe (isNothing, fromMaybe)
 import Data.IORef (newIORef, readIORef, writeIORef, modifyIORef)
 
 data Piece = Red | Yellow deriving Show
@@ -75,11 +75,17 @@ showBoard board = intercalate "\n" $ map lineToString (tupleToList board) where
 insertPiece :: BoardIndex -> Piece -> BoardMatrix -> Maybe BoardMatrix
 insertPiece columnIndex piece board = let
     boardList = boardMatrixToList board
-    column = boardList !! boardIndexToListIndex columnIndex
-    availableIndex :: Maybe Int
-    availableIndex = findIndex isNothing (column)
-    newBoard = (\ yPos -> updateBoard (columnIndex, boardIndex yPos) (Just piece) board) <$> availableIndex
+    column = (transpose boardList) !! boardIndexToListIndex columnIndex
+    availableIndex :: Maybe BoardIndex
+    availableIndex = boardIndex . ((length column - 1) -) <$> findIndex isNothing (reverse column)
+    newBoard = (\ yPos -> updateBoard (columnIndex, yPos) (Just piece) board) <$> availableIndex
   in newBoard
+
+insertPieceIfPossible :: BoardIndex -> Piece -> BoardMatrix -> BoardMatrix
+insertPieceIfPossible ix p b = fromMaybe b (insertPiece ix p b)
+
+updateBoardMulti :: BoardMatrix -> [(Maybe Piece, BoardPosition)] -> BoardMatrix
+updateBoardMulti board = foldl (\ board (piece, pos) -> updateBoard pos piece board) board
 
 main :: IO ()
 main = do
