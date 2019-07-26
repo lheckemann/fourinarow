@@ -1,10 +1,13 @@
 module Main where
 import Control.Monad.Loops (iterateM_)
-import Data.List (intercalate, transpose, findIndex)
-import Data.Maybe (isNothing, fromMaybe)
+import Control.Monad (join)
+import Data.Foldable (fold)
+import Data.List (intercalate, transpose, findIndex, find)
+import Data.Maybe (isNothing, isJust, fromMaybe)
 import Data.IORef (newIORef, readIORef, writeIORef, modifyIORef)
+import System.Exit (exitSuccess)
 
-data Piece = Red | Yellow deriving Show
+data Piece = Red | Yellow deriving (Show, Eq)
 
 antipode :: Piece -> Piece
 antipode Red = Yellow
@@ -14,11 +17,11 @@ type Seven t = (t, t, t, t, t, t, t)
 
 type SevenBySeven t = Seven (Seven t)
 
-data BoardIndex = One | Two | Three | Four | Five | Six | Seven deriving (Show, Enum)
 type BoardLine = Seven (Maybe Piece)
 
 type BoardMatrix = Seven BoardLine
 
+data BoardIndex = One | Two | Three | Four | Five | Six | Seven deriving (Show, Enum, Bounded)
 
 type BoardPosition = (BoardIndex, BoardIndex)
 
@@ -30,6 +33,18 @@ atIndex Four  (_, _, _, a, _, _, _) = a
 atIndex Five  (_, _, _, _, a, _, _) = a
 atIndex Six   (_, _, _, _, _, a, _) = a
 atIndex Seven (_, _, _, _, _, _, a) = a
+
+atPos :: BoardPosition -> SevenBySeven t -> t
+atPos (x, y) = atIndex y . atIndex x
+
+mirror :: BoardIndex -> BoardIndex
+mirror One = Seven
+mirror Two = Six
+mirror Three = Five
+mirror Four = Four
+mirror Five = Three
+mirror Six = Two
+mirror Seven = One
 
 boardIndices :: [BoardIndex]
 boardIndices = [One .. Seven]
@@ -56,6 +71,9 @@ boardIndexToListIndex ix = atIndex ix (0, 1, 2, 3, 4, 5, 6)
 
 boardMatrixToList :: BoardMatrix -> [[Maybe Piece]]
 boardMatrixToList = map tupleToList . tupleToList
+
+columns :: BoardMatrix -> [[Maybe Piece]]
+columns = transpose . boardMatrixToList
 
 tupleToList :: (t, t, t, t, t, t, t) -> [t]
 tupleToList (a, b, c, d, e, f, g) = [ a, b, c, d, e, f, g ]
@@ -91,13 +109,36 @@ insertPieceIfPossible ix p b = fromMaybe b (insertPiece ix p b)
 updateBoardMulti :: BoardMatrix -> [(Maybe Piece, BoardPosition)] -> BoardMatrix
 updateBoardMulti board = foldl (\ board (piece, pos) -> updateBoard pos piece board) board
 
+checkWinLine :: [Maybe Piece] -> Maybe Piece
+checkWinLine ps = checkWinLine_ ps 0 Red where
+  checkWinLine_ :: [Maybe Piece] -> Int -> Piece -> Maybe Piece
+  checkWinLine_ _             4            streakCol = Just streakCol
+  checkWinLine_ []            _            _         = Nothing
+  checkWinLine_ (Nothing:ps)  _            _         = checkWinLine ps
+  checkWinLine_ ((Just c):ps) streakCount  streakCol
+    | c == streakCol = checkWinLine_ ps (streakCount+1) streakCol
+    | otherwise = checkWinLine_ ps 1 c
+
+diagonalCoords :: [[BoardPosition]]
+diagonalCoords = (concatMap diagsRightUp [minBound .. maxBound]) ++ (concatMap diagsRightDown [minBound .. maxBound]) where
+  diagsRightUp ix = [zip [minBound..ix] (reverse [minBound..ix]), zip [ix..maxBound] (reverse [ix..maxBound])]
+  diagsRightDown ix = [zip [minBound..ix] [mirror ix..maxBound], zip [ix..maxBound] [minBound..mirror ix]]
+
+diagonals :: BoardMatrix -> [[Maybe Piece]]
+diagonals board = map (map $ flip atPos board) diagonalCoords
+
+checkWin :: BoardMatrix -> Maybe Piece
+checkWin board = join $ find isJust $ map checkWinLine (boardMatrixToList board ++ columns board ++ diagonals board)
+
 main :: IO ()
-main = do
-  flip iterateM_ (Yellow, emptyBoard) (\(cur, board) -> do
+main = iterateM_ step (Yellow, emptyBoard) where
+  step (cur, board) = do
     putStrLn $ showBoard board
     pos <- readLn
     let ix = boardIndex pos
-    return $ case insertPiece ix cur board of
-      Nothing -> (cur, board)
-      Just b -> (antipode cur, b))
-
+    let nextState = case insertPiece ix cur board of
+          Nothing -> (cur, board)
+          Just b -> (antipode cur, b)
+    case checkWin $ snd nextState of
+      Nothing -> return nextState
+      Just col -> putStrLn ((show col) ++ " wins!") *> exitSuccess
