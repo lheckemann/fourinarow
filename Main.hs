@@ -48,10 +48,11 @@ mirror Seven = One
 
 boardIndices :: [BoardIndex]
 boardIndices = [One .. Seven]
+
 boardIndex :: Int -> BoardIndex
 boardIndex = (boardIndices !!)
 
-updateTuple :: BoardIndex -> t -> (t, t, t, t, t, t, t) -> (t, t, t, t, t, t, t)
+updateTuple :: BoardIndex -> t -> Seven t -> Seven t
 updateTuple One   n (a, b, c, d, e, f, z) = (n, b, c, d, e, f, z)
 updateTuple Two   n (a, b, c, d, e, f, z) = (a, n, c, d, e, f, z)
 updateTuple Three n (a, b, c, d, e, f, z) = (a, b, n, d, e, f, z)
@@ -60,7 +61,7 @@ updateTuple Five  n (a, b, c, d, e, f, z) = (a, b, c, d, n, f, z)
 updateTuple Six   n (a, b, c, d, e, f, z) = (a, b, c, d, e, n, z)
 updateTuple Seven n (a, b, c, d, e, f, z) = (a, b, c, d, e, f, n)
 
-updateBoard :: BoardPosition -> Maybe Piece -> BoardMatrix -> BoardMatrix
+updateBoard :: BoardPosition -> t -> SevenBySeven t -> SevenBySeven t
 updateBoard (x, y) piece board = updateTuple y (updateTuple x piece (atIndex y board)) board
 
 boardIndexToInt :: BoardIndex -> Int
@@ -69,13 +70,13 @@ boardIndexToInt ix = atIndex ix (1, 2, 3, 4, 5, 6, 7)
 boardIndexToListIndex :: BoardIndex -> Int
 boardIndexToListIndex ix = atIndex ix (0, 1, 2, 3, 4, 5, 6)
 
-boardMatrixToList :: BoardMatrix -> [[Maybe Piece]]
+boardMatrixToList :: SevenBySeven t -> [[t]]
 boardMatrixToList = map tupleToList . tupleToList
 
-columns :: BoardMatrix -> [[Maybe Piece]]
+columns :: SevenBySeven t -> [[t]]
 columns = transpose . boardMatrixToList
 
-tupleToList :: (t, t, t, t, t, t, t) -> [t]
+tupleToList :: Seven t -> [t]
 tupleToList (a, b, c, d, e, f, g) = [ a, b, c, d, e, f, g ]
 
 emptyLine :: BoardLine
