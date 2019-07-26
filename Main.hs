@@ -10,15 +10,19 @@ antipode :: Piece -> Piece
 antipode Red = Yellow
 antipode Yellow = Red
 
-type BoardLine = (Maybe Piece, Maybe Piece, Maybe Piece, Maybe Piece, Maybe Piece, Maybe Piece, Maybe Piece)
+type Seven t = (t, t, t, t, t, t, t)
 
-type BoardMatrix = (BoardLine, BoardLine, BoardLine, BoardLine, BoardLine, BoardLine, BoardLine)
+type SevenBySeven t = Seven (Seven t)
 
 data BoardIndex = One | Two | Three | Four | Five | Six | Seven deriving (Show, Enum)
+type BoardLine = Seven (Maybe Piece)
+
+type BoardMatrix = Seven BoardLine
+
 
 type BoardPosition = (BoardIndex, BoardIndex)
 
-atIndex :: BoardIndex -> Row t -> t
+atIndex :: BoardIndex -> Seven t -> t
 atIndex One   (a, _, _, _, _, _, _) = a
 atIndex Two   (_, a, _, _, _, _, _) = a
 atIndex Three (_, _, a, _, _, _, _) = a
