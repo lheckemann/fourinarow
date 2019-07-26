@@ -18,14 +18,14 @@ data BoardIndex = One | Two | Three | Four | Five | Six | Seven deriving (Show, 
 
 type BoardPosition = (BoardIndex, BoardIndex)
 
-at :: BoardIndex -> (t, t, t, t, t, t, t) -> t
-at One   (a, _, _, _, _, _, _) = a
-at Two   (_, a, _, _, _, _, _) = a
-at Three (_, _, a, _, _, _, _) = a
-at Four  (_, _, _, a, _, _, _) = a
-at Five  (_, _, _, _, a, _, _) = a
-at Six   (_, _, _, _, _, a, _) = a
-at Seven (_, _, _, _, _, _, a) = a
+atIndex :: BoardIndex -> Row t -> t
+atIndex One   (a, _, _, _, _, _, _) = a
+atIndex Two   (_, a, _, _, _, _, _) = a
+atIndex Three (_, _, a, _, _, _, _) = a
+atIndex Four  (_, _, _, a, _, _, _) = a
+atIndex Five  (_, _, _, _, a, _, _) = a
+atIndex Six   (_, _, _, _, _, a, _) = a
+atIndex Seven (_, _, _, _, _, _, a) = a
 
 boardIndices :: [BoardIndex]
 boardIndices = [One .. Seven]
@@ -42,13 +42,13 @@ updateTuple Six   n (a, b, c, d, e, f, z) = (a, b, c, d, e, n, z)
 updateTuple Seven n (a, b, c, d, e, f, z) = (a, b, c, d, e, f, n)
 
 updateBoard :: BoardPosition -> Maybe Piece -> BoardMatrix -> BoardMatrix
-updateBoard (x, y) piece board = updateTuple y (updateTuple x piece (at y board)) board
+updateBoard (x, y) piece board = updateTuple y (updateTuple x piece (atIndex y board)) board
 
 boardIndexToInt :: BoardIndex -> Int
-boardIndexToInt ix = at ix (1, 2, 3, 4, 5, 6, 7)
+boardIndexToInt ix = atIndex ix (1, 2, 3, 4, 5, 6, 7)
 
 boardIndexToListIndex :: BoardIndex -> Int
-boardIndexToListIndex ix = at ix (0, 1, 2, 3, 4, 5, 6)
+boardIndexToListIndex ix = atIndex ix (0, 1, 2, 3, 4, 5, 6)
 
 boardMatrixToList :: BoardMatrix -> [[Maybe Piece]]
 boardMatrixToList = map tupleToList . tupleToList
